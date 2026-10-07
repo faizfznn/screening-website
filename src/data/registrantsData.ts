@@ -109,7 +109,6 @@ export const INITIAL_REGISTRANTS: Registrant[] = [
     statusPlotting: "Belum",
     sudahResched: "Belum"
   },
-
 ];
 
 export const getRegistrantsData = (): Registrant[] => {

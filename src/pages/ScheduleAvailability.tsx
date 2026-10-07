@@ -1,109 +1,114 @@
-import { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, Clock, Plus, Save, X, Building2, UserCircle, Briefcase, CheckCheck, XSquare, Sparkles } from 'lucide-react';
-import { DATES, TIME_SLOTS } from '../data/registrantsData';
-
-const JABATAN_LIST = ["BoD", "C-Level", "IRE"];
-
-const MINBUR_LIST = [
-  { code: "HC", name: "Human Capital" },
-  { code: "TG", name: "Talent Growth" },
-  { code: "CE", name: "Creative Enterprise" },
-  { code: "IAA", name: "Inter-Agency Affairs" },
-  { code: "SAW", name: "Student Advocacy & Welfare" },
-  { code: "SEE", name: "Social Equity & Enviroment" },
-  { code: "SSA", name: "Studies & Strategic Action" },
-  { code: "AF", name: "Administration & Finance" },
-  { code: "ITS", name: "IT Solution" },
-  { code: "CMI", name: "Creative Media & Information" },
-];
-
-const INITIAL_PANELISTS: Record<string, string[]> = {
-  "BoD": ["Presiden", "Wapres", "Sekjen"],
-  "C-Level - HC": ["Diandra - HC", "Daffa - HC"],
-  "C-Level - TG": [],
-  "C-Level - CE": [],
-  "C-Level - IAA": ["Zea - IAA", "Pras - IAA"],
-  "C-Level - SAW": [],
-  "C-Level - SEE": ["Rehan - SEE", "Rozan - SEE"],
-  "C-Level - SSA": [],
-  "C-Level - AF": [],
-  "C-Level - ITS": [],
-  "C-Level - CMI": ["Hessi - CMI"],
-  "IRE - HC": [],
-  "IRE - TG": [],
-  "IRE - CE": [],
-  "IRE - IAA": [],
-  "IRE - SAW": [],
-  "IRE - SEE": ["IRE 1", "IRE 2"],
-  "IRE - SSA": [],
-  "IRE - AF": [],
-  "IRE - ITS": [],
-  "IRE - CMI": [],
-};
-
-const normalizePanelistsData = (raw: any): Record<string, string[]> => {
-  const result: Record<string, string[]> = { ...INITIAL_PANELISTS };
-  if (!raw || typeof raw !== 'object') return result;
-
-  Object.entries(raw).forEach(([key, val]) => {
-    if (Array.isArray(val)) {
-      if (key.startsWith("Minbur - ")) {
-        const code = key.replace("Minbur - ", "");
-        const newKey = `C-Level - ${code}`;
-        result[newKey] = Array.from(new Set([...(result[newKey] || []), ...val]));
-      } else if (key === "IRE") {
-        result["IRE - SEE"] = Array.from(new Set([...(result["IRE - SEE"] || []), ...val]));
-      } else {
-        result[key] = Array.from(new Set([...(result[key] || []), ...val]));
-      }
-    }
-  });
-
-  return result;
-};
+import { useState, useEffect, useMemo } from 'react';
+import { CheckCircle2, XCircle, Clock, Plus, Save, X, UserCircle, Briefcase, Sparkles, CheckCheck, XSquare, RefreshCw, Layers } from 'lucide-react';
+import { DATES, TIME_SLOTS, MAIN_CATEGORIES, getHierarchyData, saveHierarchyData, getAvailabilityData, saveAvailabilityData } from '../data/registrantsData';
+import { syncWithSpreadsheet } from '../services/apiService';
 
 export default function ScheduleAvailability() {
-  const [panelistsData, setPanelistsData] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem('panelists_data');
-    return saved ? normalizePanelistsData(JSON.parse(saved)) : INITIAL_PANELISTS;
+  const [hierarchy, setHierarchy] = useState<Record<string, Record<string, string[]>>>(() => {
+    return getHierarchyData();
   });
 
-  const [selectedJabatan, setSelectedJabatan] = useState<string>("C-Level");
-  const [selectedMinbur, setSelectedMinbur] = useState<string>("SEE");
-  const [selectedPerson, setSelectedPerson] = useState<string>("Rehan - SEE");
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("BoD");
+  
+  const minbursForSelectedCat = useMemo(() => {
+    return Object.keys(hierarchy[selectedMainCategory] || {});
+  }, [hierarchy, selectedMainCategory]);
+
+  const [selectedMinbur, setSelectedMinbur] = useState<string>(() => {
+    const list = Object.keys(hierarchy["BoD"] || {});
+    return list[0] || "President";
+  });
+
+  const peopleForSelectedMinbur = useMemo(() => {
+    return hierarchy[selectedMainCategory]?.[selectedMinbur] || [];
+  }, [hierarchy, selectedMainCategory, selectedMinbur]);
+
+  const [selectedPerson, setSelectedPerson] = useState<string>(() => {
+    const list = hierarchy["BoD"]?.["President"] || [];
+    return list[0] || "Kak Daffa";
+  });
+
+  // When main category changes, update minbur and person
+  useEffect(() => {
+    const minburs = Object.keys(hierarchy[selectedMainCategory] || {});
+    if (minburs.length > 0) {
+      const nextMinbur = minburs.includes(selectedMinbur) ? selectedMinbur : minburs[0];
+      setSelectedMinbur(nextMinbur);
+      const people = hierarchy[selectedMainCategory]?.[nextMinbur] || [];
+      setSelectedPerson(people[0] || "");
+    } else {
+      setSelectedMinbur("");
+      setSelectedPerson("");
+    }
+  }, [selectedMainCategory, hierarchy]);
+
+  // When minbur changes, update person
+  useEffect(() => {
+    const people = hierarchy[selectedMainCategory]?.[selectedMinbur] || [];
+    if (people.length > 0 && !people.includes(selectedPerson)) {
+      setSelectedPerson(people[0]);
+    } else if (people.length === 0) {
+      setSelectedPerson("");
+    }
+  }, [selectedMinbur, selectedMainCategory, hierarchy]);
 
   const [showModal, setShowModal] = useState(false);
   const [newPanelistName, setNewPanelistName] = useState("");
-
-  const currentKey = selectedJabatan === "BoD" ? "BoD" : `${selectedJabatan} - ${selectedMinbur}`;
-  const currentPeopleList = panelistsData[currentKey] || [];
-
-  useEffect(() => {
-    const key = selectedJabatan === "BoD" ? "BoD" : `${selectedJabatan} - ${selectedMinbur}`;
-    const list = panelistsData[key] || [];
-    if (list.length > 0 && !list.includes(selectedPerson)) {
-      setSelectedPerson(list[0]);
-    } else if (list.length === 0) {
-      setSelectedPerson("");
-    }
-  }, [selectedJabatan, selectedMinbur, panelistsData]);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [availability, setAvailability] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem('schedule_availability');
-    return saved ? JSON.parse(saved) : {};
+    return getAvailabilityData();
   });
 
+  const handleSyncSpreadsheet = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await syncWithSpreadsheet();
+      setIsSyncing(false);
+      if (res.success) {
+        const freshAvail = getAvailabilityData();
+        setAvailability({ ...freshAvail });
+        setHierarchy(getHierarchyData());
+        alert(`Sinkronisasi Berhasil!\nTotal ${res.totalRegistrants} pendaftar dan ${res.totalAvailability} slot ketersediaan panelis berhasil diperbarui.`);
+      } else {
+        alert("Gagal sinkronisasi: " + (res.message || "Error"));
+      }
+    } catch (e: any) {
+      setIsSyncing(false);
+      alert("Error saat sinkronisasi: " + e.message);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('schedule_availability', JSON.stringify(availability));
-  }, [availability]);
+    const handleStorageChange = () => {
+      setAvailability({ ...getAvailabilityData() });
+      setHierarchy(getHierarchyData());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('panelists_updated', handleStorageChange);
+    window.addEventListener('hierarchy_updated', handleStorageChange);
+    window.addEventListener('availability_updated', handleStorageChange);
+    window.addEventListener('sync_completed', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('panelists_updated', handleStorageChange);
+      window.removeEventListener('hierarchy_updated', handleStorageChange);
+      window.removeEventListener('availability_updated', handleStorageChange);
+      window.removeEventListener('sync_completed', handleStorageChange);
+    };
+  }, []);
 
   const toggleAvailability = (date: string, time: string) => {
     if (!selectedPerson) return;
     const key = `${selectedPerson}|${date}|${time}`;
-    setAvailability(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    setAvailability(prev => {
+      const updated = {
+        ...prev,
+        [key]: !prev[key]
+      };
+      saveAvailabilityData(updated);
+      return updated;
+    });
   };
 
   const setDayAvailability = (date: string, value: boolean) => {
@@ -113,29 +118,32 @@ export default function ScheduleAvailability() {
       TIME_SLOTS.forEach(time => {
         updated[`${selectedPerson}|${date}|${time}`] = value;
       });
+      saveAvailabilityData(updated);
       return updated;
     });
   };
 
   const handleSaveNewPanelist = () => {
-    if (newPanelistName.trim() !== '') {
+    if (newPanelistName.trim() !== '' && selectedMainCategory && selectedMinbur) {
       const name = newPanelistName.trim();
-      const key = selectedJabatan === "BoD" ? "BoD" : `${selectedJabatan} - ${selectedMinbur}`;
-      const updated = {
-        ...panelistsData,
-        [key]: Array.from(new Set([...(panelistsData[key] || []), name]))
+      const currentList = hierarchy[selectedMainCategory]?.[selectedMinbur] || [];
+      const updatedHierarchy = {
+        ...hierarchy,
+        [selectedMainCategory]: {
+          ...(hierarchy[selectedMainCategory] || {}),
+          [selectedMinbur]: Array.from(new Set([...currentList, name]))
+        }
       };
-      setPanelistsData(updated);
+      setHierarchy(updatedHierarchy);
+      saveHierarchyData(updatedHierarchy);
       setSelectedPerson(name);
-      localStorage.setItem('panelists_data', JSON.stringify(updated));
-      window.dispatchEvent(new Event('panelists_updated'));
       setNewPanelistName("");
       setShowModal(false);
     }
   };
 
   const handleSave = () => {
-    localStorage.setItem('schedule_availability', JSON.stringify(availability));
+    saveAvailabilityData(availability);
     alert('Jadwal ketersediaan Anda berhasil disimpan!');
   };
 
@@ -151,74 +159,88 @@ export default function ScheduleAvailability() {
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Periode Screening: <span className="font-bold text-orange-600">30 September 2026 – 09 Oktober 2026</span>. Tandai jam luang Anda untuk proses plotting.
+            Periode Screening: <span className="font-bold text-orange-600">05 Oktober 2026 – 10 Oktober 2026</span>. Data tersinkronisasi langsung dengan Master Spreadsheet.
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all shrink-0 cursor-pointer"
-        >
-          <Save className="w-4 h-4" />
-          Simpan Jadwal
-        </button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={handleSyncSpreadsheet}
+            disabled={isSyncing}
+            title="Tarik data jadwal panelis terbaru langsung dari Google Spreadsheet"
+            className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-slate-900/10 flex items-center gap-2 transition-all shrink-0 cursor-pointer disabled:opacity-60"
+          >
+            <RefreshCw className={`w-4 h-4 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Menyinkronkan...' : 'Sync Spreadsheet'}</span>
+          </button>
+
+          <button
+            onClick={handleSave}
+            className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all shrink-0 cursor-pointer"
+          >
+            <Save className="w-4 h-4" />
+            Simpan Jadwal
+          </button>
+        </div>
       </div>
 
-      {/* SELECTION CONTROL PANEL */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5 items-end">
-          {/* 1. Pilih Jabatan */}
+      {/* 3-TIER SELECTION CONTROL PANEL */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-6 space-y-5">
+        {/* LEVEL 1: TAB KATEGORI UTAMA (BoD, C-Level, IRE, Mentor, Staff) */}
+        <div>
+          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">
+            <Layers className="w-3.5 h-3.5 text-orange-500" />
+            1. Kategori Tingkatan
+          </label>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {MAIN_CATEGORIES.map(cat => {
+              const isSelected = selectedMainCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedMainCategory(cat)}
+                  className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border ${
+                    isSelected
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <span>{cat}</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                    {Object.values(hierarchy[cat] || {}).flat().length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* LEVEL 2 & 3: MINBUR & NAMA PANELIS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end pt-2 border-t border-slate-100">
+          {/* 2. Pilih Minbur / Biro / Divisi */}
           <div>
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               <Briefcase className="w-3.5 h-3.5 text-orange-500" />
-              Tingkat Jabatan
+              2. Minbur / Kementerian / Biro / Divisi
             </label>
             <select
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white font-bold text-slate-800 text-sm transition-all cursor-pointer"
-              value={selectedJabatan}
-              onChange={(e) => setSelectedJabatan(e.target.value)}
+              value={selectedMinbur}
+              onChange={(e) => setSelectedMinbur(e.target.value)}
             >
-              {JABATAN_LIST.map(j => (
-                <option key={j} value={j}>{j}</option>
+              {minbursForSelectedCat.map(mb => (
+                <option key={mb} value={mb}>
+                  {mb} ({(hierarchy[selectedMainCategory]?.[mb] || []).length} orang)
+                </option>
               ))}
             </select>
           </div>
-
-          {/* 2. Pilih Minbur */}
-          {selectedJabatan !== "BoD" ? (
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                <Building2 className="w-3.5 h-3.5 text-orange-500" />
-                Kementerian / Biro
-              </label>
-              <select
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white font-bold text-slate-800 text-sm transition-all cursor-pointer"
-                value={selectedMinbur}
-                onChange={(e) => setSelectedMinbur(e.target.value)}
-              >
-                {MINBUR_LIST.map(m => (
-                  <option key={m.code} value={m.code}>
-                    {m.code} - {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div className="hidden md:block">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Kategori
-              </label>
-              <div className="p-2.5 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs font-medium">
-                BoD (Tidak Memerlukan Minbur)
-              </div>
-            </div>
-          )}
 
           {/* 3. Pilih Nama Panelis */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
                 <UserCircle className="w-3.5 h-3.5 text-orange-500" />
-                Nama Panelis
+                3. Nama Panelis
               </label>
               <button
                 onClick={() => setShowModal(true)}
@@ -227,13 +249,13 @@ export default function ScheduleAvailability() {
                 <Plus className="w-3 h-3" /> Tambah
               </button>
             </div>
-            {currentPeopleList.length > 0 ? (
+            {peopleForSelectedMinbur.length > 0 ? (
               <select
                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white font-bold text-slate-800 text-sm transition-all cursor-pointer"
                 value={selectedPerson}
                 onChange={(e) => setSelectedPerson(e.target.value)}
               >
-                {currentPeopleList.map(p => (
+                {peopleForSelectedMinbur.map(p => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
@@ -247,11 +269,13 @@ export default function ScheduleAvailability() {
             )}
           </div>
 
-          {/* 4. Panelis Aktif Card */}
+          {/* Panelis Aktif Card */}
           <div>
             <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-2.5 rounded-xl border border-orange-200/80 flex items-center justify-between">
               <div className="min-w-0 pr-2">
-                <p className="text-[10px] font-bold text-orange-600 uppercase">Panelis Terpilih</p>
+                <p className="text-[10px] font-bold text-orange-600 uppercase truncate">
+                  {selectedMainCategory} &bull; {selectedMinbur}
+                </p>
                 <p className="text-xs font-extrabold text-orange-950 truncate">
                   {selectedPerson || "Belum dipilih"}
                 </p>
@@ -314,22 +338,20 @@ export default function ScheduleAvailability() {
                       return (
                         <div
                           key={time}
-                          className={`flex items-center justify-between p-2.5 rounded-xl transition-all duration-150 cursor-pointer border ${
-                            isAvailable
-                              ? 'bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100/70 shadow-2xs'
-                              : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50'
-                          }`}
+                          className={`flex items-center justify-between p-2.5 rounded-xl transition-all duration-150 cursor-pointer border ${isAvailable
+                            ? 'bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100/70 shadow-2xs'
+                            : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
                           onClick={() => toggleAvailability(date, time)}
                         >
                           <span className={`text-xs font-bold ${isAvailable ? 'text-emerald-900' : 'text-slate-700'}`}>
                             {time}
                           </span>
 
-                          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-colors ${
-                            isAvailable
-                              ? 'bg-emerald-600 text-white shadow-2xs'
-                              : 'bg-slate-100 text-slate-500'
-                          }`}>
+                          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold transition-colors ${isAvailable
+                            ? 'bg-emerald-600 text-white shadow-2xs'
+                            : 'bg-slate-100 text-slate-500'
+                            }`}>
                             {isAvailable ? (
                               <>
                                 <CheckCircle2 className="w-3 h-3" />
@@ -378,27 +400,18 @@ export default function ScheduleAvailability() {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Jabatan</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Kategori & Minbur</label>
                 <div className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-sm">
-                  {selectedJabatan}
+                  {selectedMainCategory} &bull; {selectedMinbur}
                 </div>
               </div>
-
-              {selectedJabatan !== "BoD" && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Minbur</label>
-                  <div className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-sm">
-                    {selectedMinbur} - {MINBUR_LIST.find(m => m.code === selectedMinbur)?.name}
-                  </div>
-                </div>
-              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nama Panelis</label>
                 <input
                   type="text"
                   autoFocus
-                  placeholder={selectedJabatan === "BoD" ? "Contoh: Presiden" : `Contoh: Nama - ${selectedMinbur}`}
+                  placeholder={`Contoh: Nama (${selectedMinbur})`}
                   className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all font-medium text-slate-900 text-sm"
                   value={newPanelistName}
                   onChange={(e) => setNewPanelistName(e.target.value)}

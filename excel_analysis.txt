@@ -1,0 +1,56 @@
+=== DAFTAR SEMUA SHEET ===
+- 🔃 Flow Interview
+- ⁉️ Staff Criteria & Question Li
+- 📅 BoD Schedule
+- 📅 IRE Schedule
+- 📅 C-Level Schedule
+- 📅 Mentor Schedule
+- 📅 Staff Schedule
+- 📑 ALL Registrants
+- 07-10-2026
+- 08-10-2026
+- 30-09-2026
+- 01-10-2026
+- 02-10-2026
+- 03-10-2026
+- 04-10-2026
+- 09-10-2026
+- 05-10-2026
+- 06-10-2026
+- 14-02-2026
+
+=== 1. ALL REGISTRANTS HEADER & SAMPLE ===
+Row 1: (None, None, '📑 All Registrants 📑', None, None, None, None, None, None, None, None, None)
+Row 2: (' No', 'Nama Pendaftar', 'Pilihan 1 🥇', 'Pilihan 2 🥈', 'Berkas Staf', 'Notes', 'Form Penilaian', 'Form Transparansi', 'ID Line', 'Udah Dijadwalin Interview?', 'Udah Interview?', 'Udah diplotting LGD?')
+Row 3: (1.0, 'Deklanala Tasyib Admaja', 'Administration and Finance', 'Creative Media and Information', 'https://drive.google.com/drive/folders/1MyywmDsdJE3cZ-KxwWinQOsFAGu0ruHT?usp=sharing', None, 'Form Penilaian - Deklanala Tasyib Admaja', 'Form Transparansi - Deklanala Tasyib Admaja', 'deklans', None, None, None)
+Row 4: (None, None, None, None, None, None, None, None, None, None, None, None)
+Row 5: (2.0, 'Abdullah Rafif Syafri', 'Human Capital', 'Talent Growth', 'https://drive.google.com/drive/folders/1YpJBgJW1yON1QuoWL4zfxOcpvsXRnbbj?usp=drive_link', None, None, None, 'ravortega', None, None, None)
+Row 6: (None, None, None, None, None, None, None, None, None, None, None, None)
+Row 7: (3.0, 'Ratu Ayu Fatimatu Zuhriyyah', 'Human Capital', 'Administration and Finance', 'https://drive.google.com/drive/folders/1gbUXaTUnPmOBRslhac-CD-I_H4zz9z15?usp=drive_link', None, None, None, 'zuhreaa_', None, None, None)
+Row 8: (None, None, None, None, None, None, None, None, None, None, None, None)
+Row 9: (4.0, 'Christian Maynard Dennis Wijaya', 'Human Capital', 'Social Equity and Environment', 'https://drive.google.com/drive/folders/15C-csuyGbxPvP4XR-RKCWMnpFz38Srxf', None, None, None, 'nardd_', None, None, None)
+Row 10: (None, None, None, None, None, None, None, None, None, None, None, None)
+
+=== 2. DAILY SHEETS SAMPLE (05-10-2026, 08-10-2026, etc) ===
+
+--- Sheet: 08-10-2026 ---
+Row 1: ('  ', 'Kamis, 08 Oktober 2026', None, None, None, None, None, None, None, None, None, None, None, None, None)
+Row 2: ()
+Row 3: (None, 'No', 'Waktu Interview', 'Panelis', 'Ruangan', 'Nama Pendaftar', 'Pilihan 1', 'Pilihan 2', 'Berkas Staff', 'Daftar lembaga lain?', 'Form Penilaian', 'Transparasi', 'ID Line', 'Humas', 'Udah di chat?')
+Row 4: (None, 1, '15.00 - 16.00', 'Aloy - TG', 4.1, 'Raymond Christoffel Nababan', 'Talent Growth', 'Talent Growth', 'https://drive.google.com/drive/folders/188Gh34sn3KCqQ8S_UgO84AKgg_-52K2i', None, None, None, None, 'Alin', None)
+Row 5: (None, None, None, 'Nisa - TG', None, None, None, None, None)
+Row 6: (None, 2, '18.00 - 19.00', 'Umar - HC', 4.1, 'Putra Syikban Habibi', 'Human Capital', 'Creative Media and Information', 'https://drive.google.com/drive/folders/16ZYgkHj50fg2LFeKLsLicGcxyTJwynHs', None, None, None, None, 'Zea', None)
+Row 7: (None, None, None, 'Eksel - CMI', None, None, None, None, None)
+Row 8: (None, 3, '16.30 - 17.30', 'Nisa - TG', 4.1, 'Catharina Tiara Maharani', 'Talent Growth', 'Human Capital', 'https://drive.google.com/drive/folders/18yPJScTCoKyipUUWXbFsgWA2arffdXIg?usp=sharing', None, None, None, None, 'Alin', None)
+
+=== 3. SCHEDULE SHEETS (BoD, Staff, etc) ===
+
+--- Sheet: 📅 BoD Schedule ---
+Row 1: (None, None, None, '📅 BoD Schedule 📅                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ', None, None, None, None, None, None, None, None, None, None, None)
+Row 2: (None, 'BoD', 'NAME', datetime.datetime(2026, 9, 30, 0, 0), None, None, None, None, None, None, datetime.datetime(2026, 10, 1, 0, 0), None, None, None, None)
+Row 3: (None, None, None, '10:30 - 11:30', '12:00 - 13:00', '13:30 - 14:30', '15:00 - 16:00', '16:30 - 17:30', '18:00 - 19:00', '19:00 - 20:00', '10:30 - 11:30', '12:00 - 13:00', '13:30 - 14:30', '15:00 - 16:00', '16:30 - 17:30')
+Row 4: (None, 'President', 'Kak Daffa', 'Tidak', 'Tidak', 'Tidak', 'Bisa', 'Bisa', 'Tidak', 'Tidak', 'Tidak', 'Tidak', 'Tidak', 'Tidak', 'Bisa')
+Row 5: (None, 'Vice President', 'Kak Agest', 'Tidak', 'Tidak', 'Tidak', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Tidak', 'Tidak', 'Tidak', 'Bisa', 'Bisa')
+Row 6: (None, 'Cabinet’s Advisor', 'Kak Erza', 'Tidak', None, None, None, None, None, None, None, None, None, None, None)
+Row 7: (None, 'Cabinet’s Secretary', 'Kak Ailsa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Bisa', 'Tidak')
+Row 8: (None, 'Director of Advocacy and Networks', 'Kak Maulidya', 'Tidak', 'Tidak', 'Tidak', 'Tidak', 'Tidak', 'Bisa', 'Bisa', 'Tidak', 'Tidak', 'Tidak', 'Bisa', 'Bisa')

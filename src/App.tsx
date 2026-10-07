@@ -6,38 +6,28 @@ import CriteriaQuestions from './pages/CriteriaQuestions';
 import ScheduleAvailability from './pages/ScheduleAvailability';
 import AllRegistrants from './pages/AllRegistrants';
 import DailySchedules from './pages/DailySchedules';
-import { getRegistrantsData } from './data/registrantsData';
+import { DATES } from './data/registrantsData';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginModal } from './components/LoginModal';
 
 function Sidebar() {
   const location = useLocation();
   const { user, isAdmin, logout, setShowLoginModal } = useAuth();
-  const [dates, setDates] = useState<string[]>(() => {
-    const data = getRegistrantsData();
-    const uniqueDates = Array.from(new Set(
-      data.filter((d: any) => d.statusPlotting === 'Sudah' && d.bisaInterview === 'Ya')
-          .map((d: any) => d.tanggal)
-    )).filter(Boolean) as string[];
-    return uniqueDates.sort();
-  });
+  const [dates, setDates] = useState<string[]>(() => DATES);
 
   useEffect(() => {
     const fetchDates = () => {
-      const data = getRegistrantsData();
-      const uniqueDates = Array.from(new Set(
-        data.filter((d: any) => d.statusPlotting === 'Sudah' && d.bisaInterview === 'Ya')
-            .map((d: any) => d.tanggal)
-      )).filter(Boolean) as string[];
-      setDates(uniqueDates.sort());
+      setDates(DATES);
     };
     
     fetchDates();
     window.addEventListener('storage', fetchDates);
     window.addEventListener('registrants_updated', fetchDates);
+    window.addEventListener('sync_completed', fetchDates);
     return () => {
       window.removeEventListener('storage', fetchDates);
       window.removeEventListener('registrants_updated', fetchDates);
+      window.removeEventListener('sync_completed', fetchDates);
     };
   }, []);
 

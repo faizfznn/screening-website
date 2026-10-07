@@ -1,25 +1,31 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FileText, CalendarClock, CheckCircle2, Clock, ArrowLeft, Search, ExternalLink } from 'lucide-react';
-import { type Registrant, getRegistrantsData, saveRegistrantsData, TIME_SLOTS } from '../data/registrantsData';
+import { type Registrant, getRegistrantsData, saveRegistrantsData, TIME_SLOTS, formatPanelistLabel, getHierarchyData } from '../data/registrantsData';
 
 export default function DailySchedules() {
   const { date } = useParams();
   const decodedDate = decodeURIComponent(date || '');
 
   const [data, setData] = useState<Registrant[]>(() => getRegistrantsData());
+  const [hierarchy, setHierarchy] = useState(() => getHierarchyData());
   const [selectedSlot, setSelectedSlot] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setData(getRegistrantsData());
+      setData([...getRegistrantsData()]);
+      setHierarchy(getHierarchyData());
     };
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('registrants_updated', handleStorageChange);
+    window.addEventListener('hierarchy_updated', handleStorageChange);
+    window.addEventListener('sync_completed', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('registrants_updated', handleStorageChange);
+      window.removeEventListener('hierarchy_updated', handleStorageChange);
+      window.removeEventListener('sync_completed', handleStorageChange);
     };
   }, []);
 
@@ -35,13 +41,9 @@ export default function DailySchedules() {
     return "bg-slate-50 text-slate-700 border-slate-200";
   };
 
-  // Filter ONLY candidates plotted on this date & confirmed can attend ("Ya")
+  // Filter candidates plotted on this date
   const dateCandidates = useMemo(() => {
-    return data.filter(d =>
-      d.tanggal === decodedDate &&
-      d.statusPlotting === 'Sudah' &&
-      d.bisaInterview === 'Ya'
-    );
+    return data.filter(d => d.tanggal === decodedDate);
   }, [data, decodedDate]);
 
   const filteredCandidates = useMemo(() => {
@@ -189,12 +191,12 @@ export default function DailySchedules() {
                   <td className="p-4 space-y-1">
                     <div className="font-bold text-slate-800 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      <span>{row.panelis1 || "-"}</span>
+                      <span>{formatPanelistLabel(row.panelis1, hierarchy) || "-"}</span>
                     </div>
                     {row.panelis2 && (
                       <div className="font-bold text-slate-800 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        <span>{row.panelis2}</span>
+                        <span>{formatPanelistLabel(row.panelis2, hierarchy)}</span>
                       </div>
                     )}
                   </td>

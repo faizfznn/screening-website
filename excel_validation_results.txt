@@ -1,0 +1,42 @@
+1. ALL REGISTRANTS:
+- Total: 124
+- Samples: [(1, 'Deklanala Tasyib Admaja', 'Administration and Finance', 'Creative Media and Information', 'deklans'), (2, 'Abdullah Rafif Syafri', 'Human Capital', 'Talent Growth', 'ravortega'), (3, 'Ratu Ayu Fatimatu Zuhriyyah', 'Human Capital', 'Administration and Finance', 'zuhreaa_'), (4, 'Christian Maynard Dennis Wijaya', 'Human Capital', 'Social Equity and Environment', 'nardd_'), (5, 'M.radja Kinza Abgan', 'Studies and Strategic Action', 'Social Equity and Environment', 'mangkuanum')]
+
+2. DAILY PLOTTED CANDIDATES:
+- Sheet 01-10-2026: 305 sesi interview
+- Sheet 02-10-2026: 305 sesi interview
+- Sheet 03-10-2026: 305 sesi interview
+- Sheet 04-10-2026: 305 sesi interview
+- Sheet 05-10-2026: 305 sesi interview
+- Sheet 06-10-2026: 305 sesi interview
+- Sheet 07-10-2026: 305 sesi interview
+- Sheet 08-10-2026: 305 sesi interview
+- Sheet 09-10-2026: 305 sesi interview
+- Sheet 14-02-2026: 301 sesi interview
+- Sheet 30-09-2026: 305 sesi interview
+
+3. PANELISTS & AVAILABILITY:
+- Total Kategori: 21
+  * President (1 orang): ['Kak Daffa']
+  * Vice President (1 orang): ['Kak Agest']
+  * Cabinet’s Advisor (1 orang): ['Kak Erza']
+  * Cabinet’s Secretary (1 orang): ['Kak Ailsa']
+  * Director of Advocacy and Networks (1 orang): ['Kak Maulidya']
+  * Director of Development (1 orang): ['Kak Rizwan']
+  * Director of Sociopolitical Activism (1 orang): ['Kak Zahra']
+  * Director of Internal Catalyst (1 orang): ['Kak RARA']
+  * Head of Internal Resource Empowerment (1 orang): ['Kak Vanes']
+  * Vice Head of Capacity Development (1 orang): ['Kak Semi']
+  * Vice Head of Team Engagement (1 orang): ['Kak Iky']
+  * Human Capital (13 orang): ['Daffa', 'Abdil', 'Rafi', 'Fara', 'Umar', 'Lana', 'Luffi', 'Zhafir', 'Matthew', 'Dinda', 'Viona', 'Queen', 'Naura']
+  * Talent Growth (14 orang): ['Uma', 'Dzakir', 'Bimo', 'Layla', 'Aloy', 'Nisa', 'Bili', 'Faiq', 'Clau', 'Ananda', 'Ferren', 'Refi', 'Yenny', 'Ais']
+  * Creative Enterprise (14 orang): ['Alin', 'Azka', 'Niken', 'Ozza', 'Michael', 'Azra', 'Qilla', 'Putty', 'Samuel', 'Boy', 'Zaki', 'Alya', 'Fairuz', 'Rafi']
+  * Social Equity and Environment (14 orang): ['Andhika', 'Raihan', 'Zanita', 'Ninda', 'Brian', 'Andina', 'Sharen', 'Jaler', 'Meyza', 'Patrick', 'Novel', 'Aqil', 'Nabilla', 'Kalin']
+  * Studies and Strategic Action (14 orang): ['Syakila', 'Farel', 'Bintang', 'Dzikra', 'Rouf', 'Lulu', 'Alif', 'Mei', 'Varel', 'Alya', 'Lyan', 'Luki', 'Mujek', 'Nauvaldo']
+  * Inter-Agency Affairs (14 orang): ['Zea', 'Jeqy', 'Hessi', 'Gangsar', 'Jovant', 'Mone', 'Ezy', 'Rafly', 'Rakdut', 'Adhi', 'Putra', 'Intan', 'Ilfa', 'Devi']
+  * Student Advocacy and Welfare (14 orang): ['Ifaah', 'Syarief', 'Nayla', 'Juno', 'Zaldi', 'Rahmah', 'Parjak', 'Senja', 'Inka', 'Ryan', 'Arfa', 'Anggun', 'Asya', 'Aulia']
+  * Administration and Finance (13 orang): ['Afi', 'Nayla Shafa', 'Cantika', 'Fatih', 'Alvin', 'Reva', 'Sassy', 'Sam', 'Nadilla', 'Ghif', 'Wirya', 'Intan', 'Jefry']
+  * Creative Media and Information (13 orang): ['Syauqi', 'Ezra', 'Awa', 'Ifka', 'Callysta', 'Eksel', 'Wanda', 'Akbar', 'Yhayhan', 'Damar', 'Luvi', 'Tabina', 'Cicu']
+  * IT Solution (13 orang): ['Alushya', 'Naufal', 'Novita', 'Fernando', 'Rhyu', 'Inas', 'Rifky', 'Zalfa', 'Tsany', 'Lintang', 'Fadhil', 'Nayla', 'Rosy']
+- Total Slot BISA di Excel: 1481
+- Total Slot TIDAK di Excel: 2924

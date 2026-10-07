@@ -1,48 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { FileText, Lock, Search, CheckCircle2, Sparkles, ExternalLink, RefreshCw } from 'lucide-react';
-import { type Registrant, getRegistrantsData, saveRegistrantsData, DATES, TIME_SLOTS } from '../data/registrantsData';
+import { type Registrant, getRegistrantsData, saveRegistrantsData, DATES, TIME_SLOTS, INITIAL_PANELISTS, getAvailabilityData, getHierarchyData, formatPanelistLabel, sortPanelistsByPriority, getPanelistInfo } from '../data/registrantsData';
 import { useAuth } from '../context/AuthContext';
 import { GDocsIntegrationModal } from '../components/GDocsIntegrationModal';
 import { generateGDoc } from '../services/gdocsService';
-
-const INITIAL_PANELISTS = {
-  "BoD": ["Presiden", "Wapres", "Sekjen"],
-  "C-Level - HC": ["Diandra - HC", "Daffa - HC"],
-  "C-Level - TG": [],
-  "C-Level - CE": [],
-  "C-Level - IAA": ["Zea - IAA", "Pras - IAA"],
-  "C-Level - SAW": [],
-  "C-Level - SEE": ["Rehan - SEE", "Rozan - SEE"],
-  "C-Level - SSA": [],
-  "C-Level - AF": [],
-  "C-Level - ITS": [],
-  "C-Level - CMI": ["Hessi - CMI"],
-  "IRE - HC": [],
-  "IRE - TG": [],
-  "IRE - CE": [],
-  "IRE - IAA": [],
-  "IRE - SAW": [],
-  "IRE - SEE": ["IRE 1", "IRE 2"],
-  "IRE - SSA": [],
-  "IRE - AF": [],
-  "IRE - ITS": [],
-  "IRE - CMI": [],
-};
-
-const ACRONYMS: Record<string, string> = {
-  "Human Capital": "HC",
-  "Talent Growth": "TG",
-  "Creative Enterprise": "CE",
-  "Inter-Agency Affairs": "IAA",
-  "Student Advocacy & Welfare": "SAW",
-  "Social Equity & Enviroment": "SEE",
-  "Social Equity and Environment": "SEE",
-  "Studies & Strategic Action": "SSA",
-  "Administration & Finance": "AF",
-  "IT Solution": "ITS",
-  "Creative Media & Information": "CMI",
-  "Creative Media and Information": "CMI"
-};
+import { syncWithSpreadsheet } from '../services/apiService';
 
 export default function AllRegistrants() {
   const { isAdmin, setShowLoginModal } = useAuth();
@@ -51,37 +13,72 @@ export default function AllRegistrants() {
   const [filterTab, setFilterTab] = useState<'all' | 'terkonfirmasi' | 'resched' | 'lulus' | 'belum_plot'>('all');
   const [showGDocsModal, setShowGDocsModal] = useState(false);
   const [generatingRowId, setGeneratingRowId] = useState<number | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const [hierarchy, setHierarchy] = useState(() => getHierarchyData());
 
   const [availability, setAvailability] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem('schedule_availability');
-    return saved ? JSON.parse(saved) : {};
+    return getAvailabilityData();
   });
 
   const [allPanelists, setAllPanelists] = useState<string[]>(() => {
-    const saved = localStorage.getItem('panelists_data');
+    const saved = localStorage.getItem('panelists_data_v4');
     const parsed = saved ? JSON.parse(saved) : INITIAL_PANELISTS;
     return Array.from(new Set(Object.values(parsed).flat())) as string[];
   });
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setData(getRegistrantsData());
+  const handleSyncSpreadsheet = async () => {
+    setIsSyncing(true);
+    try {
+      const result = await syncWithSpreadsheet();
+      setIsSyncing(false);
+      if (result.success) {
+        setData([...getRegistrantsData()]);
+        setAvailability({ ...getAvailabilityData() });
+        setHierarchy(getHierarchyData());
+        const savedPanelists = localStorage.getItem('panelists_data_v4');
+        if (savedPanelists) {
+          setAllPanelists(Array.from(new Set(Object.values(JSON.parse(savedPanelists)).flat())) as string[]);
+        }
+        alert(`Sinkronisasi Berhasil!\n${result.totalRegistrants} data pendaftar & ${result.totalAvailability} slot ketersediaan panelis berhasil disinkronkan.`);
+      } else {
+        alert("Gagal sinkronisasi: " + (result.message || "Error"));
+      }
+    } catch (e: any) {
+      setIsSyncing(false);
+      alert("Error saat sinkronisasi: " + e.message);
+    }
+  };
 
-      const savedAvail = localStorage.getItem('schedule_availability');
-      if (savedAvail) setAvailability(JSON.parse(savedAvail));
+  useEffect(() => {
+    // Initial sync if data is empty
+    if (data.length === 0) {
+      handleSyncSpreadsheet();
+    }
+
+    const handleStorageChange = () => {
+      setData([...getRegistrantsData()]);
+      setAvailability({ ...getAvailabilityData() });
+      setHierarchy(getHierarchyData());
       
-      const savedPanelists = localStorage.getItem('panelists_data');
+      const savedPanelists = localStorage.getItem('panelists_data_v4');
       if (savedPanelists) {
         setAllPanelists(Array.from(new Set(Object.values(JSON.parse(savedPanelists)).flat())) as string[]);
       }
     };
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('panelists_updated', handleStorageChange);
+    window.addEventListener('hierarchy_updated', handleStorageChange);
+    window.addEventListener('availability_updated', handleStorageChange);
     window.addEventListener('registrants_updated', handleStorageChange);
+    window.addEventListener('sync_completed', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('panelists_updated', handleStorageChange);
+      window.removeEventListener('hierarchy_updated', handleStorageChange);
+      window.removeEventListener('availability_updated', handleStorageChange);
       window.removeEventListener('registrants_updated', handleStorageChange);
+      window.removeEventListener('sync_completed', handleStorageChange);
     };
   }, []);
 
@@ -137,6 +134,20 @@ export default function AllRegistrants() {
     });
   }, [data, searchQuery, filterTab]);
 
+  // Peta panelis yang sudah terpakai di slot tanggal & jam yang sama oleh kandidat lain
+  const occupiedPanelists = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    data.forEach(item => {
+      if (item.tanggal && item.waktu) {
+        const slotKey = `${item.tanggal}|${item.waktu}`;
+        if (!map[slotKey]) map[slotKey] = new Set();
+        if (item.panelis1) map[slotKey].add(item.panelis1.trim());
+        if (item.panelis2) map[slotKey].add(item.panelis2.trim());
+      }
+    });
+    return map;
+  }, [data]);
+
   return (
     <div className="flex flex-col h-full bg-[#f8fafc]">
       {/* TOP HEADER BAR */}
@@ -161,6 +172,17 @@ export default function AllRegistrants() {
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Sync Spreadsheet Button */}
+            <button
+              onClick={handleSyncSpreadsheet}
+              disabled={isSyncing}
+              title="Tarik data terbaru langsung dari Google Spreadsheet"
+              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs shadow-md shadow-slate-900/10 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Menyinkronkan...' : 'Sync Spreadsheet'}</span>
+            </button>
+
             {/* GDocs Auto-Generator Button */}
             <button
               onClick={() => setShowGDocsModal(true)}
@@ -286,25 +308,36 @@ export default function AllRegistrants() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredData.map((row, index) => {
-                const availablePanelists = allPanelists.filter(
-                  p => availability[`${p}|${row.tanggal}|${row.waktu}`] === true
+                const hasDateTime = Boolean(row.tanggal && row.waktu);
+                const slotKey = `${row.tanggal}|${row.waktu}`;
+                const occupiedInSlot = occupiedPanelists[slotKey] || new Set();
+
+                // Panelis yang BISA di slot ini dan TIDAK sedang ditugaskan ke kandidat lain di slot tanggal & jam yang sama
+                const availableForThisRow = hasDateTime
+                  ? allPanelists.filter(p => {
+                      const isFree = availability[`${p}|${row.tanggal}|${row.waktu}`] === true;
+                      const isAssignedToOther = occupiedInSlot.has(p) && p !== row.panelis1 && p !== row.panelis2;
+                      return isFree && !isAssignedToOther;
+                    })
+                  : [];
+
+                // Opsi untuk Panelis 1: tidak boleh sama dengan Panelis 2 milik kandidat ini
+                const availablePanelists1 = availableForThisRow.filter(p => !row.panelis2 || p !== row.panelis2);
+                const sortedAvailablePanelists1 = sortPanelistsByPriority(
+                  availablePanelists1,
+                  row.pilihan1,
+                  row.pilihan2,
+                  hierarchy
                 );
 
-                const p1Acronym = ACRONYMS[row.pilihan1] || row.pilihan1;
-                const p2Acronym = ACRONYMS[row.pilihan2] || row.pilihan2;
-
-                const sortedAllPanelists = [...allPanelists].sort((a, b) => {
-                  const aAvail = availablePanelists.includes(a) ? 10 : 0;
-                  const bAvail = availablePanelists.includes(b) ? 10 : 0;
-                  const aMatches1 = p1Acronym && a.includes(p1Acronym) ? 2 : 0;
-                  const aMatches2 = p2Acronym && a.includes(p2Acronym) ? 1 : 0;
-                  const bMatches1 = p1Acronym && b.includes(p1Acronym) ? 2 : 0;
-                  const bMatches2 = p2Acronym && b.includes(p2Acronym) ? 1 : 0;
-                  
-                  const scoreA = aAvail + aMatches1 + aMatches2;
-                  const scoreB = bAvail + bMatches1 + bMatches2;
-                  return scoreB - scoreA;
-                });
+                // Opsi untuk Panelis 2: tidak boleh sama dengan Panelis 1 milik kandidat ini
+                const availablePanelists2 = availableForThisRow.filter(p => !row.panelis1 || p !== row.panelis1);
+                const sortedAvailablePanelists2 = sortPanelistsByPriority(
+                  availablePanelists2,
+                  row.pilihan1,
+                  row.pilihan2,
+                  hierarchy
+                );
 
                 return (
                   <tr key={row.id} className="hover:bg-orange-50/20 group transition-colors">
@@ -347,33 +380,110 @@ export default function AllRegistrants() {
                     {/* Panelis: Staff & Admin IRE BISA EDIT */}
                     <td className="p-3.5 space-y-1.5">
                       <select
-                        className="w-full bg-white border border-slate-200 hover:border-slate-300 focus:border-orange-500 rounded-lg p-1.5 outline-none font-bold text-slate-800 transition-all cursor-pointer text-xs shadow-2xs"
+                        disabled={!hasDateTime}
+                        className={`w-full bg-white border ${
+                          !hasDateTime
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                            : sortedAvailablePanelists1.length === 0
+                            ? 'border-rose-300 text-rose-700 bg-rose-50/40 cursor-pointer'
+                            : 'border-slate-200 hover:border-slate-300 focus:border-orange-500 text-slate-800 cursor-pointer'
+                        } rounded-lg p-1.5 outline-none font-bold transition-all text-xs shadow-2xs`}
                         value={row.panelis1} onChange={(e) => updateField(row.id, 'panelis1', e.target.value)}
                       >
-                        <option value="">-- Panelis 1 --</option>
-                        {sortedAllPanelists.map(p => {
-                          const isAvail = availablePanelists.includes(p);
+                        {!hasDateTime ? (
+                          <option value="">-- Pilih Tanggal & Jam Dulu --</option>
+                        ) : sortedAvailablePanelists1.length === 0 ? (
+                          <option value="">-- Tidak Ada Panelis Luang --</option>
+                        ) : (
+                          <option value="">-- Pilih Panelis 1 ({sortedAvailablePanelists1.length} Tersedia) --</option>
+                        )}
+
+                        {/* Jika panelis sebelumnya tidak ada dalam daftar yang luang */}
+                        {row.panelis1 && !sortedAvailablePanelists1.includes(row.panelis1) && (
+                          <option value={row.panelis1} className="text-amber-700 bg-amber-50">
+                            ⚠️ {formatPanelistLabel(row.panelis1, hierarchy)} (Tidak Tersedia / Dipakai)
+                          </option>
+                        )}
+
+                        {sortedAvailablePanelists1.map(p => {
+                          const info = getPanelistInfo(p, hierarchy);
+                          const p1Low = (row.pilihan1 || '').toLowerCase();
+                          const p2Low = (row.pilihan2 || '').toLowerCase();
+                          const mbLow = info.minbur.toLowerCase();
+                          const smbLow = info.shortMinbur.toLowerCase();
+
+                          const isP1 = p1Low && (mbLow === p1Low || smbLow === p1Low || mbLow.includes(p1Low) || p1Low.includes(mbLow));
+                          const isP2 = p2Low && (mbLow === p2Low || smbLow === p2Low || mbLow.includes(p2Low) || p2Low.includes(mbLow));
+                          const matchTag = isP1 ? ' ★ (Pilihan 1)' : isP2 ? ' ☆ (Pilihan 2)' : '';
+
                           return (
                             <option key={p} value={p}>
-                              {p} {isAvail ? '✓ (Bisa)' : ''}
+                              {formatPanelistLabel(p, hierarchy)}{matchTag}
                             </option>
                           );
                         })}
                       </select>
+
                       <select
-                        className="w-full bg-white border border-slate-200 hover:border-slate-300 focus:border-orange-500 rounded-lg p-1.5 outline-none font-bold text-slate-800 transition-all cursor-pointer text-xs shadow-2xs"
+                        disabled={!hasDateTime}
+                        className={`w-full bg-white border ${
+                          !hasDateTime
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                            : sortedAvailablePanelists2.length === 0
+                            ? 'border-rose-300 text-rose-700 bg-rose-50/40 cursor-pointer'
+                            : 'border-slate-200 hover:border-slate-300 focus:border-orange-500 text-slate-800 cursor-pointer'
+                        } rounded-lg p-1.5 outline-none font-bold transition-all text-xs shadow-2xs`}
                         value={row.panelis2} onChange={(e) => updateField(row.id, 'panelis2', e.target.value)}
                       >
-                        <option value="">-- Panelis 2 --</option>
-                        {sortedAllPanelists.map(p => {
-                          const isAvail = availablePanelists.includes(p);
+                        {!hasDateTime ? (
+                          <option value="">-- Pilih Tanggal & Jam Dulu --</option>
+                        ) : sortedAvailablePanelists2.length === 0 ? (
+                          <option value="">-- Tidak Ada Panelis Luang --</option>
+                        ) : (
+                          <option value="">-- Pilih Panelis 2 ({sortedAvailablePanelists2.length} Tersedia) --</option>
+                        )}
+
+                        {/* Jika panelis sebelumnya tidak ada dalam daftar yang luang */}
+                        {row.panelis2 && !sortedAvailablePanelists2.includes(row.panelis2) && (
+                          <option value={row.panelis2} className="text-amber-700 bg-amber-50">
+                            ⚠️ {formatPanelistLabel(row.panelis2, hierarchy)} (Tidak Tersedia / Dipakai)
+                          </option>
+                        )}
+
+                        {sortedAvailablePanelists2.map(p => {
+                          const info = getPanelistInfo(p, hierarchy);
+                          const p1Low = (row.pilihan1 || '').toLowerCase();
+                          const p2Low = (row.pilihan2 || '').toLowerCase();
+                          const mbLow = info.minbur.toLowerCase();
+                          const smbLow = info.shortMinbur.toLowerCase();
+
+                          const isP1 = p1Low && (mbLow === p1Low || smbLow === p1Low || mbLow.includes(p1Low) || p1Low.includes(mbLow));
+                          const isP2 = p2Low && (mbLow === p2Low || smbLow === p2Low || mbLow.includes(p2Low) || p2Low.includes(mbLow));
+                          const matchTag = isP1 ? ' ★ (Pilihan 1)' : isP2 ? ' ☆ (Pilihan 2)' : '';
+
                           return (
                             <option key={p} value={p}>
-                              {p} {isAvail ? '✓ (Bisa)' : ''}
+                              {formatPanelistLabel(p, hierarchy)}{matchTag}
                             </option>
                           );
                         })}
                       </select>
+
+                      <div className="pt-0.5">
+                        {!hasDateTime ? (
+                          <span className="text-[10px] text-slate-400 font-medium">⚠️ Pilih tanggal & jam</span>
+                        ) : availableForThisRow.length > 0 ? (
+                          <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                            {availableForThisRow.length} panelis luang tersisa
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                            0 panelis luang
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Ruangan: Staff & Admin IRE BISA EDIT */}

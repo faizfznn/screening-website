@@ -1,0 +1,261 @@
+{
+  "BoD": {
+    "President": [
+      "Kak Daffa"
+    ],
+    "Vice President": [
+      "Kak Agest"
+    ],
+    "Cabinet\u2019s Advisor": [
+      "Kak Erza"
+    ],
+    "Cabinet\u2019s Secretary": [
+      "Kak Ailsa"
+    ],
+    "Director of Advocacy and Networks": [
+      "Kak Maulidya"
+    ],
+    "Director of Development": [
+      "Kak Rizwan"
+    ],
+    "Director of Sociopolitical Activism": [
+      "Kak Zahra"
+    ],
+    "Director of Internal Catalyst": [
+      "Kak RARA"
+    ],
+    "Head of Internal Resource Empowerment": [
+      "Kak Vanes"
+    ],
+    "Vice Head of Capacity Development": [
+      "Kak Semi"
+    ],
+    "Vice Head of Team Engagement": [
+      "Kak Iky"
+    ]
+  },
+  "C-Level": {
+    "Human Capital": [
+      "Abdil",
+      "Rafi",
+      "Fara"
+    ],
+    "Talent Growth": [
+      "Dzakir",
+      "Bimo",
+      "Layla"
+    ],
+    "Creative Enterprise": [
+      "Azka",
+      "Niken",
+      "Ozza"
+    ],
+    "Social Equity and Environment": [
+      "Raihan",
+      "Zanita",
+      "Ninda"
+    ],
+    "Inter-Agency Affairs": [
+      "Jeqy",
+      "Hessi",
+      "Gangsar"
+    ],
+    "Student Advocacy and Welfare": [
+      "Syarief",
+      "Nayla",
+      "Juno"
+    ],
+    "Studies and Strategic Action": [
+      "Farel",
+      "Bintang",
+      "Dzikra"
+    ],
+    "Administration and Finance": [
+      "Nayla Shafa",
+      "Cantika",
+      "Fatih"
+    ],
+    "Creative Media and Information": [
+      "Ezra",
+      "Awa",
+      "Ifka"
+    ],
+    "IT Solution": [
+      "Naufal",
+      "Novita",
+      "Fernando"
+    ]
+  },
+  "IRE": {
+    "Human Capital": [
+      "Daffa"
+    ],
+    "Talent Growth": [
+      "Uma"
+    ],
+    "Creative Enterprise": [
+      "Alin"
+    ],
+    "Social Equity and Environment": [
+      "Andhika"
+    ],
+    "Studies and Strategic Action": [
+      "Syakila"
+    ],
+    "Inter-Agency Affairs": [
+      "Zea"
+    ],
+    "Student Advocacy and Welfare": [
+      "Ifaah"
+    ],
+    "Administration and Finance": [
+      "Afi"
+    ],
+    "Creative Media and Information": [
+      "Syauqi"
+    ],
+    "IT Solution": [
+      "Alushya"
+    ]
+  },
+  "Mentor": {
+    "Human Capital": [
+      "Umar",
+      "Lana"
+    ],
+    "Talent Growth": [
+      "Aloy",
+      "Nisa"
+    ],
+    "Creative Enterprise": [
+      "Michael",
+      "Azra"
+    ],
+    "Social Equity and Environment": [
+      "Brian",
+      "Andina"
+    ],
+    "Inter-Agency Affairs": [
+      "Jovant",
+      "Mone"
+    ],
+    "Student Advocacy and Welfare": [
+      "Zaldi",
+      "Rahmah"
+    ],
+    "Studies and Strategic Action": [
+      "Rouf",
+      "Lulu"
+    ],
+    "Administration and Finance": [
+      "Alvin",
+      "Reva"
+    ],
+    "Creative Media and Information": [
+      "Callysta",
+      "Eksel"
+    ],
+    "IT Solution": [
+      "Rhyu",
+      "Inas"
+    ]
+  },
+  "Staff": {
+    "Human Capital": [
+      "Luffi",
+      "Zhafir",
+      "Matthew",
+      "Dinda",
+      "Viona",
+      "Queen",
+      "Naura"
+    ],
+    "Talent Growth": [
+      "Bili",
+      "Faiq",
+      "Clau",
+      "Ananda",
+      "Ferren",
+      "Refi",
+      "Yenny",
+      "Ais"
+    ],
+    "Creative Enterprise": [
+      "Qilla",
+      "Putty",
+      "Samuel",
+      "Boy",
+      "Zaki",
+      "Alya",
+      "Fairuz",
+      "Rafi"
+    ],
+    "Social Equity and Environment": [
+      "Sharen",
+      "Jaler",
+      "Meyza",
+      "Patrick",
+      "Novel",
+      "Aqil",
+      "Nabilla",
+      "Kalin"
+    ],
+    "Inter-Agency Affairs": [
+      "Ezy",
+      "Rafly",
+      "Rakdut",
+      "Adhi",
+      "Putra",
+      "Intan",
+      "Ilfa",
+      "Devi"
+    ],
+    "Student Advocacy and Welfare": [
+      "Parjak",
+      "Senja",
+      "Inka",
+      "Ryan",
+      "Arfa",
+      "Anggun",
+      "Asya",
+      "Aulia"
+    ],
+    "Studies and Strategic Action": [
+      "Alif",
+      "Mei",
+      "Varel",
+      "Alya",
+      "Lyan",
+      "Luki",
+      "Mujek",
+      "Nauvaldo"
+    ],
+    "Administration and Finance": [
+      "Sassy",
+      "Sam",
+      "Nadilla",
+      "Ghif",
+      "Wirya",
+      "Intan",
+      "Jefry"
+    ],
+    "Creative Media and Information": [
+      "Wanda",
+      "Akbar",
+      "Yhayhan",
+      "Damar",
+      "Luvi",
+      "Tabina",
+      "Cicu"
+    ],
+    "IT Solution": [
+      "Rifky",
+      "Zalfa",
+      "Tsany",
+      "Lintang",
+      "Fadhil",
+      "Nayla",
+      "Rosy"
+    ]
+  }
+}

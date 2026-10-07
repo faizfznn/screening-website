@@ -70,10 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setShowLoginModal(false);
       return { success: true };
     }
-
-    return { 
-      success: false, 
-      message: 'Username atau Password salah! (Admin IRE: "ire hebat" / "semangatIRE")' 
+    return {
+      success: false,
+      message: 'Username atau password salah! Silakan periksa kembali.'
     };
   };
 

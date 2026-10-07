@@ -7,15 +7,31 @@ export const FOLDER_TRANSPARANSI_ID = "1BH9WEmXdVkBEidLPVLIfb4bpV2eH9Eph";
 export const TEMPLATE_PENILAIAN_ID = "1JwU79RHBfpqyqOOYs62wT5CHEUAZzb7nc4B-y1N2zlM";
 export const TEMPLATE_TRANSPARANSI_ID = "1nToXP6VlGrSu3_2TT8S_B2joVKjOK6LGmbBnitZKNpQ";
 
-// Official Default Webhook URL (BEM Apps Script)
-export const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzXqfDb0V_ULpOp9bWv8m6CJtAYwK41DBFDosBlYd1JVkl2uNvAwtGsfJu2leXrFIPZ/exec";
+// Official Default Webhook URL (BEM Apps Script from ENV or Fallback)
+export const DEFAULT_WEBHOOK_URL =
+  import.meta.env.VITE_GDOCS_WEBHOOK_URL ||
+  "https://script.google.com/macros/s/AKfycbzhWMnBL6YD8RfdUN8_LR2ulN3EsK0ebrRIxxpew4lXImzffuEEVsMn0J7DxqEJgniq/exec";
 
 export const getWebhookUrl = (): string => {
   return localStorage.getItem('gdocs_webhook_url') || DEFAULT_WEBHOOK_URL;
 };
 
+export const isUsingCustomWebhook = (): boolean => {
+  const stored = localStorage.getItem('gdocs_webhook_url');
+  return Boolean(stored && stored.trim() !== DEFAULT_WEBHOOK_URL);
+};
+
 export const setWebhookUrl = (url: string): void => {
-  localStorage.setItem('gdocs_webhook_url', url.trim() || DEFAULT_WEBHOOK_URL);
+  if (!url || url.trim() === DEFAULT_WEBHOOK_URL) {
+    localStorage.removeItem('gdocs_webhook_url');
+  } else {
+    localStorage.setItem('gdocs_webhook_url', url.trim());
+  }
+};
+
+export const resetWebhookUrl = (): string => {
+  localStorage.removeItem('gdocs_webhook_url');
+  return DEFAULT_WEBHOOK_URL;
 };
 
 export interface GenerateResult {
@@ -37,7 +53,7 @@ export async function generateGDoc(
   const webhookUrl = getWebhookUrl();
   const templateId = type === 'penilaian' ? TEMPLATE_PENILAIAN_ID : TEMPLATE_TRANSPARANSI_ID;
   const folderId = type === 'penilaian' ? FOLDER_PENILAIAN_ID : FOLDER_TRANSPARANSI_ID;
-  const docTitle = type === 'penilaian' 
+  const docTitle = type === 'penilaian'
     ? `Form Penilaian - ${registrant.nama}`
     : `Form Transparansi - ${registrant.nama}`;
 
@@ -79,7 +95,7 @@ export async function generateGDoc(
 
   // Fallback: Direct Google Docs copy URL with pre-named title
   const copyUrl = `https://docs.google.com/document/d/${templateId}/copy?title=${encodeURIComponent(docTitle)}`;
-  
+
   return {
     success: true,
     url: copyUrl,

@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FileText, Lock, Search, CheckCircle2, Sparkles, ExternalLink, RefreshCw } from 'lucide-react';
+import { FileText, Lock, Search, CheckCircle2, Sparkles, ExternalLink, RefreshCw, Settings } from 'lucide-react';
 import { type Registrant, getRegistrantsData, saveRegistrantsData, DATES, TIME_SLOTS, INITIAL_PANELISTS, getAvailabilityData, getHierarchyData, formatPanelistLabel, sortPanelistsByPriority, getPanelistInfo } from '../data/registrantsData';
 import { useAuth } from '../context/AuthContext';
 import { GDocsIntegrationModal } from '../components/GDocsIntegrationModal';
+import { SyncSpreadsheetModal } from '../components/SyncSpreadsheetModal';
 import { generateGDoc } from '../services/gdocsService';
 import { syncWithSpreadsheet } from '../services/apiService';
+import { isSupabaseConfigured, updateSingleRegistrantInSupabase } from '../services/supabaseClient';
 
 export default function AllRegistrants() {
   const { isAdmin, setShowLoginModal } = useAuth();
@@ -12,6 +14,7 @@ export default function AllRegistrants() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'terkonfirmasi' | 'resched' | 'lulus' | 'belum_plot'>('all');
   const [showGDocsModal, setShowGDocsModal] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [generatingRowId, setGeneratingRowId] = useState<number | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -88,6 +91,9 @@ export default function AllRegistrants() {
       saveRegistrantsData(updated);
       return updated;
     });
+    if (isSupabaseConfigured) {
+      updateSingleRegistrantInSupabase(id, { [field]: value }).catch(e => console.warn('Supabase update error:', e));
+    }
   };
 
   const handleGenerateSingle = async (row: Registrant, type: 'penilaian' | 'transparansi') => {
@@ -172,16 +178,25 @@ export default function AllRegistrants() {
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Sync Spreadsheet Button */}
-            <button
-              onClick={handleSyncSpreadsheet}
-              disabled={isSyncing}
-              title="Tarik data terbaru langsung dari Google Spreadsheet"
-              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs shadow-md shadow-slate-900/10 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Menyinkronkan...' : 'Sync Spreadsheet'}</span>
-            </button>
+            {/* Sync Spreadsheet Button Group */}
+            <div className="inline-flex rounded-xl shadow-md shadow-slate-900/10 overflow-hidden border border-slate-800">
+              <button
+                onClick={handleSyncSpreadsheet}
+                disabled={isSyncing}
+                title="Tarik data terbaru langsung dari Google Spreadsheet"
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Menyinkronkan...' : 'Sync Spreadsheet'}</span>
+              </button>
+              <button
+                onClick={() => setShowSyncModal(true)}
+                title="Pengaturan URL API Spreadsheet"
+                className="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-l border-slate-700/80 font-bold text-xs flex items-center justify-center transition-all cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
             {/* GDocs Auto-Generator Button */}
             <button
@@ -752,6 +767,21 @@ export default function AllRegistrants() {
         onClose={() => setShowGDocsModal(false)}
         registrants={data}
         onDataUpdated={(updated) => setData(updated)}
+      />
+
+      {/* SPREADSHEET SYNC MODAL */}
+      <SyncSpreadsheetModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        onSyncSuccess={() => {
+          setData([...getRegistrantsData()]);
+          setAvailability({ ...getAvailabilityData() });
+          setHierarchy(getHierarchyData());
+          const savedPanelists = localStorage.getItem('panelists_data_v4');
+          if (savedPanelists) {
+            setAllPanelists(Array.from(new Set(Object.values(JSON.parse(savedPanelists)).flat())) as string[]);
+          }
+        }}
       />
     </div>
   );

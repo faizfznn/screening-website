@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FileText, CalendarClock, CheckCircle2, Clock, ArrowLeft, Search, ExternalLink } from 'lucide-react';
 import { type Registrant, getRegistrantsData, saveRegistrantsData, TIME_SLOTS, formatPanelistLabel, getHierarchyData } from '../data/registrantsData';
+import { isSupabaseConfigured, updateSingleRegistrantInSupabase } from '../services/supabaseClient';
 
 export default function DailySchedules() {
   const { date } = useParams();
@@ -33,6 +34,9 @@ export default function DailySchedules() {
     const newData = data.map(item => item.id === id ? { ...item, [field]: value } : item);
     setData(newData);
     saveRegistrantsData(newData);
+    if (isSupabaseConfigured) {
+      updateSingleRegistrantInSupabase(id, { [field]: value }).catch(e => console.warn('Supabase update error:', e));
+    }
   };
 
   const badgeColor = (value: string) => {

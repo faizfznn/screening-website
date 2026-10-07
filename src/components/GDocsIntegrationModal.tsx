@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, CheckCircle2, Copy, Check, ExternalLink, Play, Settings, Sparkles, FolderSync, AlertCircle, Folder, RotateCcw, ShieldCheck } from 'lucide-react';
 import { type Registrant, saveRegistrantsData } from '../data/registrantsData';
-import { getWebhookUrl, setWebhookUrl, generateGDoc, FOLDER_PENILAIAN_ID, FOLDER_TRANSPARANSI_ID, TEMPLATE_PENILAIAN_ID, TEMPLATE_TRANSPARANSI_ID, DEFAULT_WEBHOOK_URL } from '../services/gdocsService';
+import { getWebhookUrl, setWebhookUrl, resetWebhookUrl, isUsingCustomWebhook, generateGDoc, FOLDER_PENILAIAN_ID, FOLDER_TRANSPARANSI_ID, TEMPLATE_PENILAIAN_ID, TEMPLATE_TRANSPARANSI_ID } from '../services/gdocsService';
 
 interface GDocsModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ interface GDocsModalProps {
 export function GDocsIntegrationModal({ isOpen, onClose, registrants, onDataUpdated }: GDocsModalProps) {
   const [activeTab, setActiveTab] = useState<'batch' | 'settings' | 'script'>('batch');
   const [webhook, setWebhook] = useState(getWebhookUrl());
+  const [isCustom, setIsCustom] = useState(isUsingCustomWebhook());
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [copied, setCopied] = useState(false);
@@ -33,13 +34,15 @@ export function GDocsIntegrationModal({ isOpen, onClose, registrants, onDataUpda
   const handleSaveWebhook = (e: React.FormEvent) => {
     e.preventDefault();
     setWebhookUrl(webhook);
+    setIsCustom(isUsingCustomWebhook());
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   const handleResetToDefault = () => {
-    setWebhook(DEFAULT_WEBHOOK_URL);
-    setWebhookUrl(DEFAULT_WEBHOOK_URL);
+    const defaultUrl = resetWebhookUrl();
+    setWebhook(defaultUrl);
+    setIsCustom(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
   };
@@ -378,45 +381,93 @@ function doPost(e) {
           {/* TAB 2: SETTINGS WEBHOOK DEFAULT */}
           {activeTab === 'settings' && (
             <form onSubmit={handleSaveWebhook} className="space-y-4">
-              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Script Webhook BEM sudah aktif secara default dan siap langsung digunakan.</span>
+              {/* SOURCE STATUS BANNER */}
+              <div className={`p-4 rounded-2xl border transition-all ${
+                isCustom 
+                  ? 'bg-amber-50/80 border-amber-200 text-amber-900' 
+                  : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+              }`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2 font-bold text-xs">
+                    {isCustom ? (
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    )}
+                    <span>
+                      {isCustom 
+                        ? 'Mode Kustom Aktif (Input User)' 
+                        : 'Menggunakan Script dari ENV (Bawaan Sistem)'}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
+                    isCustom
+                      ? 'bg-amber-100 text-amber-800 border-amber-300'
+                      : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  }`}>
+                    {isCustom ? 'User Override' : 'VITE_GDOCS_WEBHOOK_URL'}
+                  </span>
+                </div>
+                <p className="text-[11px] leading-relaxed opacity-90">
+                  {isCustom
+                    ? 'Aplikasi saat ini menggunakan URL Webhook khusus yang Anda masukkan di browser ini. Anda dapat mengeditnya kembali di bawah atau mereset ke konfigurasi .env default.'
+                    : 'Aplikasi saat ini otomatis menggunakan URL Google Apps Script yang terpasang di file .env server. Anda tetap bisa menggantinya secara langsung lewat input di bawah jika dibutuhkan.'}
+                </p>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Default Google Apps Script Webhook URL
+                    Google Apps Script Webhook URL
                   </label>
-                  <button
-                    type="button"
-                    onClick={handleResetToDefault}
-                    className="text-orange-600 hover:text-orange-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" /> Reset ke BEM URL
-                  </button>
+                  {isCustom && (
+                    <button
+                      type="button"
+                      onClick={handleResetToDefault}
+                      className="text-orange-600 hover:text-orange-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer hover:underline"
+                    >
+                      <RotateCcw className="w-3 h-3" /> Kembalikan ke URL ENV (.env)
+                    </button>
+                  )}
                 </div>
                 <input
                   type="url"
+                  required
+                  placeholder="https://script.google.com/macros/s/.../exec"
                   value={webhook}
                   onChange={(e) => setWebhook(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 text-xs font-medium text-slate-800 font-mono"
+                  className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 text-xs font-medium text-slate-800 font-mono transition-all"
                 />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  💡 <em>User dapat mengganti URL script kapan saja melalui form ini. Perubahan akan langsung tersimpan di browser Anda.</em>
+                </p>
               </div>
 
               {saveSuccess && (
-                <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Webhook URL tersimpan!
+                <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> 
+                  <span>{isCustom ? 'URL Kustom berhasil disimpan!' : 'URL berhasil dikembalikan ke default (.env)!'}</span>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
-                >
-                  Simpan URL
-                </button>
+              <div className="flex items-center justify-between pt-2">
+                {!isCustom && (
+                  <button
+                    type="button"
+                    onClick={handleResetToDefault}
+                    className="px-3 py-2 text-slate-500 hover:text-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Refresh dari ENV
+                  </button>
+                )}
+                <div className="flex gap-2 ml-auto">
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Check className="w-4 h-4" /> Simpan Perubahan URL
+                  </button>
+                </div>
               </div>
             </form>
           )}

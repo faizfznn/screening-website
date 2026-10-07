@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { CheckCircle2, XCircle, Clock, Plus, Save, X, UserCircle, Briefcase, Sparkles, CheckCheck, XSquare, RefreshCw, Layers } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Plus, Save, X, UserCircle, Briefcase, Sparkles, CheckCheck, XSquare, RefreshCw, Layers, Settings } from 'lucide-react';
 import { DATES, TIME_SLOTS, MAIN_CATEGORIES, getHierarchyData, saveHierarchyData, getAvailabilityData, saveAvailabilityData } from '../data/registrantsData';
 import { syncWithSpreadsheet } from '../services/apiService';
+import { SyncSpreadsheetModal } from '../components/SyncSpreadsheetModal';
 
 export default function ScheduleAvailability() {
   const [hierarchy, setHierarchy] = useState<Record<string, Record<string, string[]>>>(() => {
@@ -53,6 +54,7 @@ export default function ScheduleAvailability() {
   }, [selectedMinbur, selectedMainCategory, hierarchy]);
 
   const [showModal, setShowModal] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [newPanelistName, setNewPanelistName] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -163,19 +165,29 @@ export default function ScheduleAvailability() {
           </p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={handleSyncSpreadsheet}
-            disabled={isSyncing}
-            title="Tarik data jadwal panelis terbaru langsung dari Google Spreadsheet"
-            className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-slate-900/10 flex items-center gap-2 transition-all shrink-0 cursor-pointer disabled:opacity-60"
-          >
-            <RefreshCw className={`w-4 h-4 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Menyinkronkan...' : 'Sync Spreadsheet'}</span>
-          </button>
+          {/* Sync Spreadsheet Button Group */}
+          <div className="inline-flex rounded-xl shadow-md shadow-slate-900/10 overflow-hidden border border-slate-800 shrink-0">
+            <button
+              onClick={handleSyncSpreadsheet}
+              disabled={isSyncing}
+              title="Tarik data jadwal panelis terbaru langsung dari Google Spreadsheet"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Menyinkronkan...' : 'Sync Spreadsheet'}</span>
+            </button>
+            <button
+              onClick={() => setShowSyncModal(true)}
+              title="Pengaturan URL API Spreadsheet"
+              className="px-2.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-l border-slate-700/80 font-bold text-xs flex items-center justify-center transition-all cursor-pointer"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           <button
             onClick={handleSave}
-            className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all shrink-0 cursor-pointer"
+            className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all shrink-0 cursor-pointer"
           >
             <Save className="w-4 h-4" />
             Simpan Jadwal
@@ -440,6 +452,16 @@ export default function ScheduleAvailability() {
           </div>
         </div>
       )}
+
+      {/* SPREADSHEET SYNC MODAL */}
+      <SyncSpreadsheetModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        onSyncSuccess={() => {
+          setAvailability({ ...getAvailabilityData() });
+          setHierarchy(getHierarchyData());
+        }}
+      />
     </div>
   );
 }

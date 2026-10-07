@@ -292,6 +292,46 @@ export const getRegistrantsData = (): Registrant[] => {
   return INITIAL_REGISTRANTS;
 };
 
+export const mergeRegistrants = (incoming: Registrant[], existing: Registrant[]): Registrant[] => {
+  if (!existing || existing.length === 0) return incoming;
+
+  const existingMap = new Map<number, Registrant>();
+  existing.forEach(r => existingMap.set(r.id, r));
+
+  return incoming.map(inc => {
+    const prev = existingMap.get(inc.id);
+    if (!prev) return inc;
+
+    return {
+      ...inc,
+      // Core spreadsheet info
+      nama: inc.nama || prev.nama,
+      pilihan1: inc.pilihan1 || prev.pilihan1,
+      pilihan2: inc.pilihan2 || prev.pilihan2,
+      berkas: inc.berkas || prev.berkas,
+      idLine: inc.idLine || prev.idLine,
+      
+      // Preserve operational plotting & interview fields if already filled locally
+      tanggal: prev.tanggal || inc.tanggal || "",
+      waktu: prev.waktu || inc.waktu || "",
+      panelis1: prev.panelis1 || inc.panelis1 || "",
+      panelis2: prev.panelis2 || inc.panelis2 || "",
+      ruangan: prev.ruangan || inc.ruangan || "",
+      notes: prev.notes || inc.notes || "",
+      lembagaLain: prev.lembagaLain || inc.lembagaLain || "",
+      formPenilaian: prev.formPenilaian || inc.formPenilaian || "",
+      transparansi: prev.transparansi || inc.transparansi || "",
+      humas: prev.humas || inc.humas || "",
+      udahChat: prev.udahChat !== 'Belum' ? prev.udahChat : (inc.udahChat || 'Belum'),
+      bisaInterview: prev.bisaInterview !== 'Belum' ? prev.bisaInterview : (inc.bisaInterview || 'Belum'),
+      lulusLkmm: prev.lulusLkmm || inc.lulusLkmm || 'Lulus',
+      statusInterview: prev.statusInterview !== 'Belum' ? prev.statusInterview : (inc.statusInterview || 'Belum'),
+      statusPlotting: prev.statusPlotting !== 'Belum' ? prev.statusPlotting : (inc.statusPlotting || 'Belum'),
+      sudahResched: prev.sudahResched !== 'Belum' ? prev.sudahResched : (inc.sudahResched || 'Belum'),
+    };
+  });
+};
+
 export const saveRegistrantsData = (data: Registrant[]) => {
   try {
     localStorage.setItem('registrants_data_v4', JSON.stringify(data));

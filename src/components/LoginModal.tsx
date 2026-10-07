@@ -13,12 +13,16 @@ export const LoginModal: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const res = login(username, password);
-    if (!res.success) {
-      setError(res.message || 'Login gagal!');
-    } else {
-      setUsername('');
-      setPassword('');
+    try {
+      const res = login(username, password);
+      if (!res || !res.success) {
+        setError(res?.message || 'Username atau password salah! Silakan periksa kembali.');
+      } else {
+        setUsername('');
+        setPassword('');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan saat login.');
     }
   };
 
